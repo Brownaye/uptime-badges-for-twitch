@@ -11,6 +11,8 @@ This extension adds that missing number: a small timer on every live thumbnail,
 colour-coded so you can read the whole page at a glance — who just went live,
 and who's deep into a marathon.
 
+[![Available in the Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Install-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/uptime-badges-for-twitch/edjnemggfneaclboljejcciaghjglkei)
+
 </div>
 
 ![Four channel cards, each showing a coloured uptime badge in the corner of the thumbnail, with a legend underneath reading: just started, 2-5 hours, 5-8 hours, marathon](docs/badges-illustration.webp)
@@ -65,10 +67,11 @@ Changes apply immediately, with no page reload.
 
 ### From the Chrome Web Store — recommended
 
-**Not published yet.** A Web Store listing is on the way; once it's live this
-will be the right way to install for everyone who isn't editing the code,
-because updates then arrive automatically. Until then, use the developer
-instructions below.
+[![Available in the Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Install-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/uptime-badges-for-twitch/edjnemggfneaclboljejcciaghjglkei)
+
+One click and you're set — this is the right way to install for everyone who
+isn't editing the code, because updates then arrive automatically. If you want
+to run or modify the source instead, use the developer instructions below.
 
 ### Load unpacked — for developers
 
