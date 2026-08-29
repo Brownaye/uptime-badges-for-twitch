@@ -284,6 +284,105 @@ function buildBadge(anchor, login, startedAt) {
   box.appendChild(badge);
 }
 
+/* ---------- reconnect banner ---------- */
+
+let bannerRequested = false;
+
+function styleImportant(el, styles) {
+  for (const [prop, value] of Object.entries(styles)) {
+    el.style.setProperty(prop, value, "important");
+  }
+}
+
+// One-time banner shown when the stored token has expired and could not
+// be silently renewed. Dismissal persists until the next reconnect.
+function showReconnectBanner() {
+  if (bannerRequested) return;
+  bannerRequested = true;
+
+  chrome.storage.local.get(["authBannerDismissed"], (data) => {
+    if (data.authBannerDismissed) return;
+    if (document.querySelector(".tub-reconnect-banner")) return;
+
+    const banner = document.createElement("div");
+    banner.className = "tub-reconnect-banner";
+    styleImportant(banner, {
+      position: "fixed",
+      top: "60px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      "z-index": "9999",
+      display: "flex",
+      "align-items": "center",
+      gap: "10px",
+      background: "rgba(20, 20, 24, 0.95)",
+      color: "#ffffff",
+      "font-size": "13px",
+      "font-weight": "600",
+      "line-height": "1.4",
+      padding: "10px 14px",
+      "border-radius": "8px",
+      border: "1px solid rgba(255, 255, 255, 0.15)",
+      "box-shadow": "0 4px 16px rgba(0, 0, 0, 0.4)",
+      "font-family": '-apple-system, "Helvetica Neue", Arial, sans-serif',
+      "white-space": "nowrap",
+    });
+
+    const text = document.createElement("span");
+    text.textContent = "Uptime Badges: your Twitch login expired.";
+    banner.appendChild(text);
+
+    const reconnect = document.createElement("button");
+    reconnect.textContent = "Reconnect";
+    styleImportant(reconnect, {
+      background: "#9147ff",
+      color: "#ffffff",
+      border: "none",
+      "border-radius": "4px",
+      padding: "5px 10px",
+      "font-size": "13px",
+      "font-weight": "600",
+      cursor: "pointer",
+      "font-family": "inherit",
+    });
+    reconnect.addEventListener("click", () => {
+      reconnect.disabled = true;
+      reconnect.textContent = "Connecting...";
+      chrome.runtime.sendMessage({ type: "LOGIN" }, (res) => {
+        if (!chrome.runtime.lastError && res && res.ok) {
+          banner.remove();
+          scanPage();
+        } else {
+          reconnect.disabled = false;
+          reconnect.textContent = "Reconnect";
+        }
+      });
+    });
+    banner.appendChild(reconnect);
+
+    const dismiss = document.createElement("button");
+    dismiss.textContent = "×";
+    dismiss.setAttribute("aria-label", "Dismiss");
+    styleImportant(dismiss, {
+      background: "transparent",
+      color: "rgba(255, 255, 255, 0.7)",
+      border: "none",
+      padding: "0 2px",
+      "font-size": "18px",
+      "line-height": "1",
+      cursor: "pointer",
+      "font-family": "inherit",
+    });
+    dismiss.addEventListener("click", () => {
+      chrome.storage.local.set({ authBannerDismissed: true });
+      banner.remove();
+    });
+    banner.appendChild(dismiss);
+
+    document.body.appendChild(banner);
+  });
+}
+
 /* ---------- data flow ---------- */
 
 function collectVisibleLogins() {
@@ -326,6 +425,15 @@ function requestBatch() {
           console.info(
             "[Uptime Badges] Not connected to Twitch. Click the extension icon and connect to show badges."
           );
+          if (res.error === "unauthorized") {
+            showReconnectBanner();
+          } else {
+            // Only prompt users whose login lapsed, never those who simply
+            // haven't connected yet.
+            chrome.storage.local.get(["authExpired"], (data) => {
+              if (data.authExpired) showReconnectBanner();
+            });
+          }
         }
         return;
       }
@@ -371,7 +479,26 @@ function tick() {
   });
 }
 
+const CACHE_MAX_AGE = 3 * CACHE_TTL;
+const CACHE_MAX_SIZE = 500;
+
+// Drop stale entries, then oldest-first down to the size cap, so long
+// browsing sessions across many channels can't grow memory unbounded.
+function pruneCache() {
+  const now = Date.now();
+  for (const [login, entry] of cache) {
+    if (now - entry.at > CACHE_MAX_AGE) cache.delete(login);
+  }
+  if (cache.size > CACHE_MAX_SIZE) {
+    const oldestFirst = [...cache.entries()].sort((a, b) => a[1].at - b[1].at);
+    for (const [login] of oldestFirst.slice(0, cache.size - CACHE_MAX_SIZE)) {
+      cache.delete(login);
+    }
+  }
+}
+
 function refreshBadgedChannels() {
+  pruneCache();
   // Invalidate badged channels so the next scan re-verifies live status.
   document.querySelectorAll(".tub-uptime-badge").forEach((badge) => {
     const login = badge.dataset.login;
@@ -419,9 +546,29 @@ function init() {
   setInterval(refreshBadgedChannels, REFRESH_MS);
 
   // Debounced rescan on DOM changes (infinite scroll, tab switches).
+  // Chat mutates the DOM constantly on busy streams, so mutations inside
+  // chat containers — and pure text churn — are ignored rather than
+  // re-arming the debounce forever.
+  const CHAT_SELECTOR = [
+    ".chat-shell",
+    ".chat-room",
+    ".stream-chat",
+    ".chat-scrollable-area__message-container",
+    '[data-test-selector="chat-room-component-layout"]',
+  ].join(", ");
+
+  function isRelevantMutation(m) {
+    if (m.target instanceof Element && m.target.closest(CHAT_SELECTOR)) return false;
+    for (const node of m.addedNodes) {
+      if (node.nodeType === Node.ELEMENT_NODE) return true;
+    }
+    return false;
+  }
+
   let debounceTimer = null;
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((mutations) => {
     if (debounceTimer) return;
+    if (!mutations.some(isRelevantMutation)) return;
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
       scanPage();

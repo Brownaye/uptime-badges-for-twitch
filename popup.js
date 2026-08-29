@@ -35,16 +35,12 @@ function saveSettings() {
   chrome.storage.local.set({ settings });
 }
 
-function fmtH(n) {
-  return Number.isInteger(n) ? String(n) : String(n);
-}
-
 function renderLegend() {
   const [a, b, c] = settings.thresholds;
-  els.lgGreen.textContent = `Under ${fmtH(a)}h`;
-  els.lgBlue.textContent = `${fmtH(a)}-${fmtH(b)}h`;
-  els.lgYellow.textContent = `${fmtH(b)}-${fmtH(c)}h`;
-  els.lgRed.textContent = `${fmtH(c)}h+`;
+  els.lgGreen.textContent = `Under ${a}h`;
+  els.lgBlue.textContent = `${a}-${b}h`;
+  els.lgYellow.textContent = `${b}-${c}h`;
+  els.lgRed.textContent = `${c}h+`;
 }
 
 function renderSettings() {

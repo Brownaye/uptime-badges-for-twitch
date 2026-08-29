@@ -15,54 +15,96 @@ function setStored(obj) {
   return new Promise((resolve) => chrome.storage.local.set(obj, resolve));
 }
 
-async function login() {
+// Red "!" on the toolbar icon while the stored token is expired.
+function setAuthAlert(on) {
+  chrome.action.setBadgeText({ text: on ? "!" : "" });
+  if (on) chrome.action.setBadgeBackgroundColor({ color: "#d93025" });
+}
+
+// Run the implicit grant flow. Non-interactive succeeds only while the
+// user's twitch.tv session cookie is still valid, which lets us renew an
+// expired token without any UI.
+async function authorize(interactive) {
   const authUrl =
     "https://id.twitch.tv/oauth2/authorize" +
     `?client_id=${encodeURIComponent(CLIENT_ID)}` +
     `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
     "&response_type=token" +
     "&scope=user:read:follows" +
-    "&force_verify=true";
+    (interactive ? "&force_verify=true" : "");
 
   const redirectResponse = await chrome.identity.launchWebAuthFlow({
     url: authUrl,
-    interactive: true,
+    interactive,
   });
 
   const params = new URLSearchParams(new URL(redirectResponse).hash.substring(1));
   const accessToken = params.get("access_token");
   if (!accessToken) throw new Error("Twitch did not return an access token.");
 
-  await setStored({ accessToken, connected: true });
+  await setStored({
+    accessToken,
+    connected: true,
+    authExpired: false,
+    authBannerDismissed: false,
+  });
+  setAuthAlert(false);
+  return accessToken;
+}
+
+function login() {
+  return authorize(true);
 }
 
 async function logout() {
-  await setStored({ accessToken: null, connected: false });
+  await setStored({
+    accessToken: null,
+    connected: false,
+    authExpired: false,
+    authBannerDismissed: false,
+  });
+  setAuthAlert(false);
+}
+
+// Token came back 401: try a silent renewal first, and only surface the
+// expiry (toolbar alert + content-script banner) if that fails too.
+async function handleExpiredToken() {
+  try {
+    return await authorize(false);
+  } catch {
+    await setStored({ accessToken: null, connected: false, authExpired: true });
+    setAuthAlert(true);
+    return null;
+  }
 }
 
 // Look up live status and start time for a batch of channel logins.
 // Helix accepts up to 100 user_login params per request.
 async function getStreamsByLogin(logins) {
-  const { accessToken } = await getStored(["accessToken"]);
+  let { accessToken } = await getStored(["accessToken"]);
   if (!accessToken) return { ok: false, error: "not_connected" };
 
   const unique = [...new Set((logins || []).filter(Boolean))].slice(0, 300);
   if (unique.length === 0) return { ok: true, streams: [], queried: [] };
 
-  const headers = {
-    Authorization: `Bearer ${accessToken}`,
-    "Client-Id": CLIENT_ID,
-  };
-
   const streams = [];
   for (let i = 0; i < unique.length; i += 100) {
     const chunk = unique.slice(i, i + 100);
     const qs = chunk.map((l) => "user_login=" + encodeURIComponent(l)).join("&");
-    const resp = await fetch(`https://api.twitch.tv/helix/streams?first=100&${qs}`, { headers });
+    const url = `https://api.twitch.tv/helix/streams?first=100&${qs}`;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      "Client-Id": CLIENT_ID,
+    };
+
+    let resp = await fetch(url, { headers });
 
     if (resp.status === 401) {
-      await setStored({ connected: false, accessToken: null });
-      return { ok: false, error: "unauthorized" };
+      accessToken = await handleExpiredToken();
+      if (!accessToken) return { ok: false, error: "unauthorized" };
+      headers.Authorization = `Bearer ${accessToken}`;
+      resp = await fetch(url, { headers });
+      if (resp.status === 401) return { ok: false, error: "unauthorized" };
     }
     if (!resp.ok) continue;
 
@@ -77,6 +119,10 @@ async function getStreamsByLogin(logins) {
 
   return { ok: true, streams, queried: unique };
 }
+
+// Toolbar badge text does not survive a browser restart; restore it
+// whenever the worker spins up with an expired login still on record.
+getStored(["authExpired"]).then((data) => setAuthAlert(!!data.authExpired));
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {

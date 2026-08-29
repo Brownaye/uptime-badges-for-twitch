@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Uptime Badges for Twitch",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "See how long every live streamer has been broadcasting, right on their thumbnails. Color-coded, customizable, lightweight.",
   "permissions": ["identity", "storage"],
   "host_permissions": [
