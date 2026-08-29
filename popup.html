@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      width: 300px;
+      margin: 0;
+      font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+      background: #18181b;
+      color: #efeff1;
+    }
+    header {
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      border-bottom: 1px solid #2e2e33;
+    }
+    .section {
+      padding: 12px 14px;
+      border-bottom: 1px solid #2e2e33;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .row label { font-size: 13px; }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #9147ff;
+      cursor: pointer;
+    }
+    input[type="range"] {
+      width: 130px;
+      accent-color: #9147ff;
+    }
+    select {
+      background: #2e2e33;
+      color: #efeff1;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 12px;
+    }
+    #sizeValue {
+      font-size: 12px;
+      color: #adadb8;
+      min-width: 38px;
+      text-align: right;
+    }
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px;
+      margin-bottom: 8px;
+      background: #2e2e33;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #efeff1;
+      font-size: 12px;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      background: #9147ff;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button.secondary {
+      background: #2e2e33;
+      color: #efeff1;
+    }
+    #status {
+      font-size: 11px;
+      margin-top: 8px;
+      color: #adadb8;
+    }
+    .legend {
+      font-size: 11px;
+      color: #adadb8;
+      line-height: 1.7;
+      padding: 10px 14px;
+    }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>Uptime Badges for Twitch</header>
+
+  <div class="section">
+    <div class="row">
+      <label for="enabled">Show badges</label>
+      <input type="checkbox" id="enabled" />
+    </div>
+    <div class="row">
+      <label for="colors">Color by uptime</label>
+      <input type="checkbox" id="colors" />
+    </div>
+    <div class="row">
+      <label for="sidebar">Sidebar times</label>
+      <input type="checkbox" id="sidebar" />
+    </div>
+    <div class="row">
+      <label>Size</label>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="range" id="size" min="60" max="160" step="5" />
+        <span id="sizeValue">100%</span>
+      </div>
+    </div>
+    <div class="row">
+      <label for="corner">Position</label>
+      <select id="corner">
+        <option value="bottom-right">Bottom right</option>
+        <option value="bottom-left">Bottom left</option>
+        <option value="top-right">Top right</option>
+        <option value="top-left">Top left</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <span class="dot" style="background:#00e676"></span><span id="lgGreen">Under 2h</span> &nbsp;
+        <span class="dot" style="background:#4fc3f7"></span><span id="lgBlue">2-5h</span><br />
+        <span class="dot" style="background:#ffd740"></span><span id="lgYellow">5-8h</span> &nbsp;
+        <span class="dot" style="background:#ff5252"></span><span id="lgRed">8h+</span>
+      </div>
+      <button id="optionsBtn" style="width:auto; padding:5px 10px; font-size:11px;" class="secondary">Options</button>
+    </div>
+
+    <div id="optionsPanel" style="display:none; margin-top:10px; border-top:1px solid #2e2e33; padding-top:10px;">
+      <div class="row">
+        <label style="font-size:12px;"><span class="dot" style="background:#00e676"></span>Green until (hours)</label>
+        <input type="number" id="t1" min="0.5" step="0.5" style="width:60px; margin:0;" />
+      </div>
+      <div class="row">
+        <label style="font-size:12px;"><span class="dot" style="background:#4fc3f7"></span>Blue until (hours)</label>
+        <input type="number" id="t2" min="1" step="0.5" style="width:60px; margin:0;" />
+      </div>
+      <div class="row">
+        <label style="font-size:12px;"><span class="dot" style="background:#ffd740"></span>Yellow until (hours)</label>
+        <input type="number" id="t3" min="1.5" step="0.5" style="width:60px; margin:0;" />
+      </div>
+      <div style="font-size:11px; color:#adadb8;">Red covers everything after. Times must go up in order.</div>
+      <div id="thresholdError" style="font-size:11px; color:#ff5252; margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <div class="section" id="setup" style="display:none">
+    <button id="connectBtn">Connect Twitch account</button>
+  </div>
+
+  <div class="section" id="connectedView" style="display:none">
+    <button id="disconnectBtn" class="secondary">Disconnect Twitch account</button>
+  </div>
+
+  <div class="section" style="border-bottom:none; padding-top:8px;">
+    <div id="status"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Welcome — Uptime Badges for Twitch</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 500px at 85% -10%, rgba(100, 44, 165, 0.45), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(70, 30, 120, 0.35), transparent 60%),
+        #0e0e10;
+      color: #efeff1;
+      display: flex;
+      justify-content: center;
+      padding: 44px 16px 60px;
+    }
+    .wrap { max-width: 680px; width: 100%; }
+
+    /* hero */
+    .hero { text-align: center; margin-bottom: 28px; }
+    .hero img {
+      width: 96px; height: 96px;
+      border-radius: 22px;
+      box-shadow: 0 8px 40px rgba(145, 71, 255, 0.35);
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 26px; margin: 0 0 6px; }
+    .tagline { color: #adadb8; font-size: 15px; margin: 0; }
+
+    /* demo card */
+    .demo {
+      display: flex;
+      justify-content: center;
+      margin: 26px 0 10px;
+    }
+    .thumb {
+      position: relative;
+      width: 320px; height: 180px;
+      border-radius: 12px;
+      background:
+        radial-gradient(160px 120px at 30% 70%, #8a3bd0, transparent 70%),
+        radial-gradient(200px 140px at 75% 20%, #3b6ad0, transparent 70%),
+        linear-gradient(135deg, #1b1230, #241a3f);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+    .tag {
+      position: absolute;
+      font-size: 12px; font-weight: 700;
+      padding: 4px 7px; border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+    .tag.live { top: 10px; left: 10px; background: #e91916; color: #fff; }
+    .tag.viewers { bottom: 10px; left: 10px; background: rgba(0,0,0,0.65); color: #fff; font-weight: 600; }
+    .tag.uptime { bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #00e676; }
+    .demo-caption {
+      text-align: center;
+      color: #adadb8; font-size: 13px;
+      margin: 0 0 26px;
+    }
+
+    /* legend */
+    .legend {
+      display: flex; justify-content: center; gap: 22px; flex-wrap: wrap;
+      background: #18181b;
+      border: 1px solid #2e2e33;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 26px;
+      font-size: 13px;
+    }
+    .legend span { display: flex; align-items: center; gap: 7px; color: #d6d6dd; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+    /* steps */
+    .card {
+      background: #18181b;
+      border: 1px solid #2e2e33;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .step { display: flex; gap: 14px; align-items: flex-start; }
+    .step + .step { margin-top: 22px; }
+    .num {
+      background: #9147ff; color: #fff;
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step h2 { font-size: 15px; margin: 2px 0 5px; }
+    .step p { font-size: 13.5px; color: #adadb8; margin: 0; line-height: 1.55; }
+    kbd {
+      background: #2e2e33; border-radius: 4px;
+      padding: 1px 6px; font-size: 12px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      background: #9146FF; color: #fff;
+      border: none; border-radius: 10px;
+      padding: 16px 22px;
+      font-size: 16px; font-weight: 600;
+      font-family: inherit;
+      cursor: pointer; margin-top: 12px;
+      box-shadow: 0 6px 28px rgba(145, 70, 255, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    button:hover {
+      background: #a970ff;
+      box-shadow: 0 8px 34px rgba(145, 70, 255, 0.55);
+    }
+    button:disabled { background: #3a3a3d; color: #999; animation: none; box-shadow: none; cursor: default; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 6px 24px rgba(145, 70, 255, 0.35); }
+      50% { transform: scale(1.02); box-shadow: 0 8px 36px rgba(145, 70, 255, 0.6); }
+    }
+    .urgency {
+      margin: 12px 0 0;
+      font-size: 13.5px;
+      color: #ffd740 !important;
+      font-weight: 600;
+    }
+    #done { display: none; margin-top: 10px; }
+    #done .msg {
+      color: #00e676; font-size: 14px; font-weight: 600;
+      margin: 0 0 10px;
+    }
+    .btn-link {
+      display: block;
+      width: 100%;
+      background: #9146FF; color: #fff;
+      border-radius: 10px;
+      padding: 15px 22px;
+      font-size: 16px; font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      animation: glow 2s ease-in-out infinite;
+    }
+    .btn-link:hover {
+      background: #a970ff;
+      box-shadow: 0 8px 44px rgba(169, 112, 255, 0.85);
+    }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 6px 24px rgba(145, 70, 255, 0.45); }
+      50% { box-shadow: 0 8px 44px rgba(169, 112, 255, 0.9); }
+    }
+    a { color: #bf94ff; }
+
+    .foot {
+      text-align: center;
+      color: #6e6e78; font-size: 12px;
+      margin-top: 24px; line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="hero">
+      <img src="icons/icon128.png" alt="" />
+      <h1>Uptime Badges for Twitch</h1>
+      <p class="tagline">Know who just went live, and who's been at it all day, at a glance.</p>
+    </div>
+
+    <div class="demo">
+      <div class="thumb">
+        <div class="tag live">LIVE</div>
+        <div class="tag viewers">8.4K viewers</div>
+        <div class="tag uptime">02h:37m</div>
+      </div>
+    </div>
+    <p class="demo-caption">A small timer appears on every live thumbnail, across all of Twitch.</p>
+
+    <div class="legend">
+      <span><i class="dot" style="background:#00e676"></i>Just started</span>
+      <span><i class="dot" style="background:#4fc3f7"></i>2–5 hours</span>
+      <span><i class="dot" style="background:#ffd740"></i>5–8 hours</span>
+      <span><i class="dot" style="background:#ff5252"></i>Marathon</span>
+    </div>
+
+    <div class="card">
+      <div class="step">
+        <div class="num">1</div>
+        <div>
+          <h2>Pin the extension</h2>
+          <p>Click the puzzle piece <kbd>&#129513;</kbd> next to your address bar, then the pin beside <strong>Uptime Badges for Twitch</strong>. The icon holds all the settings: turn colors on or off, set your own time ranges, resize the badge, or move it to any corner.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">2</div>
+        <div>
+          <h2>Connect your Twitch account</h2>
+          <p>A one-time standard Twitch login, needed because Twitch's API requires it to answer "who's live and since when". Your login stays in your browser. No tracking, no data collection, nothing sent anywhere else.</p>
+          <p class="urgency">&#9888; Badges stay hidden until this is done. One click, ten seconds.</p>
+          <button id="connectBtn">Connect Twitch</button>
+          <div id="done">
+            <p class="msg">Connected! You're all set.</p>
+            <a class="btn-link" href="https://www.twitch.tv/" target="_blank">Open Twitch</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">3</div>
+        <div>
+          <h2>Browse Twitch</h2>
+          <p>Open your <a href="https://www.twitch.tv/directory/following" target="_blank">Following page</a> or anywhere else on Twitch. Badges appear within a few seconds and update live.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot">
+      Your access token is stored only in this browser and can be revoked any time from your Twitch account's Connections settings.<br />
+      Not affiliated with Twitch Interactive, Inc.
+    </p>
+
+  </div>
+  <script src="welcome.js"></script>
+</body>
+</html>
