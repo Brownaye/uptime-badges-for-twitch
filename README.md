@@ -17,7 +17,7 @@ and who's deep into a marathon.
 
 <div align="center">
 
-![Four channel cards, each showing a coloured uptime badge in the corner of the thumbnail, with a legend underneath reading: just started, 2-5 hours, 5-8 hours, marathon](docs/badges-illustration.webp)
+![Four channel cards, each showing a coloured uptime badge in the corner of the thumbnail, with a legend underneath reading: just started, 2-5 hours, 5-8 hours, marathon](badges-illustration.webp)
 
 <sub><b>Design illustration</b> — how the badges sit on channel cards, next to
 Twitch's own viewer count. The cards here are mockups, not a capture of a live
@@ -41,7 +41,7 @@ Twitch page.</sub>
 
 <div align="center">
 
-![The extension logo beside four example badges in green, blue, yellow and red, reading 00h:47m, 03h:12m, 06h:30m and 09h:15m](docs/badge-colors.webp)
+![The extension logo beside four example badges in green, blue, yellow and red, reading 00h:47m, 03h:12m, 06h:30m and 09h:15m](badge-colors.webp)
 
 <sub><b>Promotional artwork</b> — the four default colour bands.</sub>
 
