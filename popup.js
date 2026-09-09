@@ -4,8 +4,12 @@ const DEFAULT_SETTINGS = {
   size: 100,
   corner: "bottom-right",
   thresholds: [2, 5, 8],
+  palette: ["#00e676", "#4fc3f7", "#ffd740", "#ff5252"],
   sidebar: false,
 };
+
+const DEFAULT_PALETTE = DEFAULT_SETTINGS.palette;
+const BANDS = [0, 1, 2, 3];
 
 const els = {
   enabled: document.getElementById("enabled"),
@@ -27,6 +31,11 @@ const els = {
   lgBlue: document.getElementById("lgBlue"),
   lgYellow: document.getElementById("lgYellow"),
   lgRed: document.getElementById("lgRed"),
+  dots: BANDS.map((i) => document.getElementById("dot" + i)),
+  pdots: BANDS.map((i) => document.getElementById("pdot" + i)),
+  colors_: BANDS.map((i) => document.getElementById("c" + i)),
+  hexes: BANDS.map((i) => document.getElementById("h" + i)),
+  resetColors: document.getElementById("resetColors"),
 };
 
 let settings = { ...DEFAULT_SETTINGS };
@@ -41,6 +50,45 @@ function renderLegend() {
   els.lgBlue.textContent = `${a}-${b}h`;
   els.lgYellow.textContent = `${b}-${c}h`;
   els.lgRed.textContent = `${c}h+`;
+  renderPalette();
+}
+
+/* colours */
+function normalizeHex(v) {
+  if (typeof v !== "string") return null;
+  let h = v.trim().toLowerCase();
+  if (!h.startsWith("#")) h = "#" + h;
+  if (/^#[0-9a-f]{3}$/.test(h)) h = "#" + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  return /^#[0-9a-f]{6}$/.test(h) ? h : null;
+}
+
+function currentPalette() {
+  const p = Array.isArray(settings.palette) ? settings.palette : [];
+  return BANDS.map((i) => normalizeHex(p[i]) || DEFAULT_PALETTE[i]);
+}
+
+function paintDots(palette) {
+  BANDS.forEach((i) => {
+    els.dots[i].style.background = palette[i];
+    els.pdots[i].style.background = palette[i];
+  });
+}
+
+function renderPalette() {
+  const palette = currentPalette();
+  paintDots(palette);
+  BANDS.forEach((i) => {
+    els.colors_[i].value = palette[i];
+    els.hexes[i].value = palette[i];
+  });
+}
+
+function setBandColor(i, hex) {
+  const palette = currentPalette();
+  palette[i] = hex;
+  settings.palette = palette;
+  renderPalette();
+  saveSettings();
 }
 
 function renderSettings() {
@@ -129,6 +177,42 @@ function tryToSaveThresholds() {
 
 [els.t1, els.t2, els.t3].forEach((input) => {
   input.addEventListener("change", tryToSaveThresholds);
+});
+
+/* colour options */
+BANDS.forEach((i) => {
+  // live preview while dragging in the picker, save when it closes
+  els.colors_[i].addEventListener("input", () => {
+    const hex = normalizeHex(els.colors_[i].value);
+    if (!hex) return;
+    els.hexes[i].value = hex;
+    const palette = currentPalette();
+    palette[i] = hex;
+    paintDots(palette);
+  });
+  els.colors_[i].addEventListener("change", () => {
+    const hex = normalizeHex(els.colors_[i].value);
+    if (hex) setBandColor(i, hex);
+  });
+
+  // typed hex: accept #abc or #aabbcc, revert if not a colour
+  els.hexes[i].addEventListener("change", () => {
+    const hex = normalizeHex(els.hexes[i].value);
+    if (!hex) {
+      els.thresholdError.textContent = "Colors need to be hex like #ff5252.";
+      els.hexes[i].value = currentPalette()[i];
+      return;
+    }
+    els.thresholdError.textContent = "";
+    setBandColor(i, hex);
+  });
+});
+
+els.resetColors.addEventListener("click", () => {
+  settings.palette = [...DEFAULT_PALETTE];
+  els.thresholdError.textContent = "";
+  renderPalette();
+  saveSettings();
 });
 
 /* connection handlers */

@@ -13,9 +13,18 @@ const DEFAULT_SETTINGS = {
   colors: true,
   size: 100, // percent
   corner: "bottom-right", // bottom-right | bottom-left | top-right | top-left
-  thresholds: [2, 5, 8], // hours: green until t1, blue until t2, yellow until t3, red after
+  thresholds: [2, 5, 8], // hours: band 1 until t1, band 2 until t2, band 3 until t3, band 4 after
+  palette: ["#00e676", "#4fc3f7", "#ffd740", "#ff5252"], // badge text color per band
   sidebar: false, // compact times on the left sidebar channel list
 };
+
+const DEFAULT_PALETTE = DEFAULT_SETTINGS.palette;
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+function bandColor(i) {
+  const p = Array.isArray(settings.palette) ? settings.palette[i] : undefined;
+  return typeof p === "string" && HEX_RE.test(p) ? p : DEFAULT_PALETTE[i];
+}
 
 let settings = { ...DEFAULT_SETTINGS };
 let cache = new Map(); // login -> { startedAt: Date|null, at: msTimestamp }
@@ -46,10 +55,10 @@ function uptimeColor(startedAt) {
   if (!settings.colors) return "#ffffff";
   const t = settings.thresholds || [2, 5, 8];
   const hours = (Date.now() - startedAt.getTime()) / 3600000;
-  if (hours < t[0]) return "#00e676"; // green: just started
-  if (hours < t[1]) return "#4fc3f7"; // blue: settled in
-  if (hours < t[2]) return "#ffd740"; // yellow: long session
-  return "#ff5252"; // red: marathon
+  if (hours < t[0]) return bandColor(0); // just started
+  if (hours < t[1]) return bandColor(1); // settled in
+  if (hours < t[2]) return bandColor(2); // long session
+  return bandColor(3); // marathon
 }
 
 /* ---------- DOM discovery ---------- */
