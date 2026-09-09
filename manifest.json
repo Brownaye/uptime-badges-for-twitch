@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "Uptime Badges for Twitch",
   "version": "2.1.8",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiT/v8CLgkO6ANNxx49uQNa+DXT1ks4Sto++yX3uyKRw+2JDfzdn5Tgh4irYZPw6Smn83Qn/z3iUTjQkoDE/MUTfbQY4nCcrOckFxKlAFzwZDfcHA5KNwP2jx0FKLQy6D7jPFcKks8s9wGz3Ly87DPxQlh8/VhqRUFAz6lm28NFmNLcDkk48ri6MrRKeIAOBSoO/6kg0QhAVRp7pay4OQBEse1HiQZkDN17fGOlzo3yJvkvFh16qx3hgh57RGNd0Cs2mXSb6kIBwUjUn8bRxucW39FMRhXjIoTjzAF+r/1fbU45xUzCM7xRUejO06cFprYztQFEHBzdJxh3gNKyks9wIDAQAB",
   "description": "See how long every live streamer has been broadcasting, right on their thumbnails. Color-coded, customizable, lightweight.",
   "permissions": ["identity", "storage"],
   "host_permissions": [
