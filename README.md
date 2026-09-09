@@ -55,7 +55,9 @@ Twitch page.</sub>
 | 🔴 Red | 8 hours and up | marathon |
 
 All three cut-off points are editable, so "marathon" can mean whatever you want
-it to mean.
+it to mean. Each band's colour is editable too, so if green and red look alike
+to you, or you just prefer your own palette, pick any colours you like. A
+**Reset colors** button brings the defaults back.
 
 ## Settings
 
@@ -67,7 +69,8 @@ Everything lives in the toolbar popup — click the extension icon.
   (off by default)
 - **Size** — scale the badge from 60% to 160%
 - **Position** — bottom right, bottom left, top right or top left of the thumbnail
-- **Options** — set your own hour thresholds for the three colour changes
+- **Options** — set your own hour thresholds and your own colour for each
+  of the four bands
 
 Changes apply immediately, with no page reload.
 
